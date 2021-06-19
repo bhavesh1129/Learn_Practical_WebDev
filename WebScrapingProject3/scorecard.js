@@ -1,5 +1,8 @@
 const request = require('request');
 const cheerio = require('cheerio');
+const path = require('path');
+const fs = require('fs');
+const xlsx = require('xlsx');
 
 function getAllTheDataofTheMatchRelatedToScore(url) {
     request(url, callback);
@@ -43,9 +46,60 @@ function extractMatchDetails(html) {
                 let sr = $(allCols[7]).text().trim();
 
                 console.log(`${playerName} ${runs} ${balls} ${balls} ${fours} ${sixes} ${sr}`);
+
+                processingPlayersToExcelFile(teamsName, playerName, runs, balls, fours,
+                    sixes, sr, opponentTeamName, venueOfTheMatch, dateOfTheMatch, result);
             }
         }
     }
+}
+
+function processingPlayersToExcelFile(teamsName, playerName, runs, balls, fours, sixes,
+    sr, opponentTeamName, venueOfTheMatch, dateOfTheMatch, result) {
+    let teamPath = path.join(__dirname, "IPL", teamsName);
+    createDirectories(teamPath);
+
+    let filePath = path.join(teamPath, playerName + ".xlsx");
+    let contentInExcel = readInExcel(filePath, playerName);
+
+    let playerObj = {
+        teamsName,
+        playerName,
+        runs,
+        balls,
+        fours,
+        sixes,
+        sr,
+        opponentTeamName,
+        venueOfTheMatch,
+        dateOfTheMatch,
+        result
+    }
+    contentInExcel.push(playerObj);
+    writeInExcel(filePath, contentInExcel, playerName);
+}
+
+function createDirectories(filePath) {
+    if (fs.existsSync(filePath) == false) {
+        fs.mkdirSync(filePath);
+    }
+}
+
+function writeInExcel(filePath, json, sheetName) {
+    let newWorkbook = xlsx.utils.book_new();
+    let newWorksheet = xlsx.utils.json_to_sheet(json, sheetName);
+    xlsx.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+    xlsx.writeFile(newWorkbook, filePath);
+}
+
+function readInExcel(filePath, sheetName) {
+    if (fs.existsSync(filePath) == false) {
+        return [];
+    }
+    let workBook = xlsx.readFile(filePath); //to get the workbook
+    let excelData = workBook.Sheets[sheetName]; //to get sheet
+    let contentInExcelFile = xlsx.utils.sheet_to_json(excelData); //to get sheet data
+    return contentInExcelFile;
 }
 
 module.exports = {
