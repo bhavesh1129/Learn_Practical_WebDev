@@ -2,6 +2,7 @@ const request = require('request');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs');
+const pdfkit = require('pdfkit');
 
 console.log("Before Data Fetching!😀");
 const url = "https://github.com/topics";
@@ -95,7 +96,7 @@ function getIssueFromTheirRepo(html, nameOfDir) {
         let repoNameForDir = nameOfRepoForDir[2];
 
         let pathForRepo = path.join(__dirname, nameOfDir, repoNameForDir);
-        fs.writeFileSync(pathForRepo + ".json", "");
+        fs.writeFileSync(pathForRepo + ".pdf", "");
 
         console.log(repoNameForDir);
         someIssueMentioned(fullIssueLinks, pathForRepo);
@@ -115,16 +116,18 @@ function someIssueMentioned(fullIssueLinks, pathForRepo) {
 function listOfIssues(html, pathForRepo) {
     let $ = cheerio.load(html);
     let issuesDataInRepo = $(".flex-auto.min-width-0.p-2.pr-3.pr-md-2 a.Link--primary");
+    let issuesArr = [];
     for (let i = 0; i < 10; i++) {
         let issuesInRepo = $(issuesDataInRepo[i]).attr("href");
         console.log(issuesInRepo);
+        issuesArr.push(issuesInRepo);
 
         //add issues to json file
-        let issuesObj = [
-            issuesInRepo,
-        ]
-        let issuesToJSONFile = JSON.stringify(issuesObj);
-        fs.writeFileSync(pathForRepo + ".json", issuesToJSONFile);
+        let issuesContent = JSON.stringify(issuesArr);
+        let pdfDoc = new pdfkit;
+        pdfDoc.pipe(fs.createWriteStream(pathForRepo + ".pdf"));
+        pdfDoc.text(issuesContent);
+        pdfDoc.end();
     }
     console.log("-------------------ISSUES NAME/ID-------------------");
     console.log("----------------------------------------------------");
