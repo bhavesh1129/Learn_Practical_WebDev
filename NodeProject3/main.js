@@ -28,7 +28,7 @@ for (let i = 0; i < inputArr.length; i++) {
     doesExist = fs.existsSync(filesArr[i]);
     if (doesExist == false) {
         console.log("Existing File Error!🔴");
-        return
+        return;
     }
 }
 
